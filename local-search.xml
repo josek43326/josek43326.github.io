@@ -4,6 +4,19 @@
   
   
   <entry>
+    <title>Zero Copy</title>
+    <link href="/2023/04/08/zero-copy/"/>
+    <url>/2023/04/08/zero-copy/</url>
+    
+    <content type="html"><![CDATA[<h3 id="零拷贝简介"><a href="#零拷贝简介" class="headerlink" title="零拷贝简介"></a>零拷贝简介</h3><p><strong>零拷贝</strong>是指将数据直接从磁盘文件复制到网卡设备中，而不需要经由应用程序。零拷贝大大提高了应用程序的性能，减少了内核和用户模式之间的上下文切换。对 Linux 操作系统而言，零拷贝技术依赖于底层的 <code>sendfile()</code> 方法。在 Java 中，<code>FileChannal.transferTo()</code> 方法的底层实现就是 <code>sendfile()</code> 方法</p><h3 id="未使用零拷贝"><a href="#未使用零拷贝" class="headerlink" title="未使用零拷贝"></a>未使用零拷贝</h3><p>复制操作需要在用户模式和内核模式之间进行四次上下文切换，并且在操作完成之前将数据复制了四次</p><p><img src="/../img/%25E4%25BC%25A0%25E7%25BB%259F%25E6%2595%25B0%25E6%258D%25AE%25E5%25A4%258D%25E5%2588%25B6%25E6%2596%25B9%25E6%25B3%2595.drawio.svg" alt="传统数据复制方法"></p><p>1、调用 read() 时，用户态切换到内核态，DMA读取文件内容将其复制到内核模式下的 Read Buffer 中</p><p>2、CPU 控制将内核模式数据复制到用户模式下，read() 调用返回，内核态切换到用户态</p><p>3、调用 write() 时，用户态切换到内核态，将用户模式下的内容复制到内核模式下的 Socket Buffer 中</p><p>4、将 Socket Buffer 的数据通过DMA复制到网卡设备中传送，write() 调用返回，内核态切换到用户态</p><h3 id="使用零拷贝"><a href="#使用零拷贝" class="headerlink" title="使用零拷贝"></a>使用零拷贝</h3><p>应用程序可以直接请求内核把磁盘中的数据传输给 Socket</p><h4 id="早期Linux未使用-gather-operations-的零拷贝"><a href="#早期Linux未使用-gather-operations-的零拷贝" class="headerlink" title="早期Linux未使用 gather operations 的零拷贝"></a><strong>早期Linux未使用 gather operations 的零拷贝</strong></h4><p>上下文切换2次，数据复制为3次</p><p><img src="/../img/%25E9%259B%25B6%25E6%258B%25B7%25E8%25B4%259D.drawio.svg" alt="零拷贝"></p><p>1、<code>transferTo()</code> 方法使得文件内容被 DMA 复制到读取缓冲区中</p><p>2、数据被内核复制到与输出套接字关联的 Socket Buffer 中</p><p>3、DMA 将数据从内核套接字缓冲区传递到协议引擎（网卡设备等）</p><h4 id="采用-gather-operations-的改进后的零拷贝"><a href="#采用-gather-operations-的改进后的零拷贝" class="headerlink" title="采用 gather operations 的改进后的零拷贝"></a><strong>采用 gather operations 的改进后的零拷贝</strong></h4><p>上下文切换2次，数据复制为2次</p><p><img src="/../img/%25E6%2594%25B9%25E8%25BF%259B%25E7%2589%2588%25E9%259B%25B6%25E6%258B%25B7%25E8%25B4%259D.drawio.svg" alt="改进版零拷贝"></p><p>1、<code>transferTo()</code> 方法使得文件内容被 DMA 复制到读取缓冲区中</p><p>2、改进后没有文件数据被复制到 Socket Buffer 中，只有包含有关<strong>数据的位置</strong>和<strong>长度信息的描述符</strong>才会附加到Socket Buffer， DMA 将数据直接从内核缓冲区传递到协议引擎（网卡设备等）</p>]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Hello World</title>
     <link href="/2022/08/29/hello-world/"/>
     <url>/2022/08/29/hello-world/</url>
